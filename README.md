@@ -7,11 +7,14 @@ Usage
 ========
 * Make the dnd file executable
 * dnd roll
-* Then give a die size and a number of sizes (ommiting the number defaults to 1)
+* then use like this: '2d20', or '2d20+5', or '2d20-3', or 'd20+6', or 'd20'
 
-panos@panos-desktop:~/Desktop/dnd$ dnd roll 
-roll(die,how_many): 20 
-[0] 21:55:54>> Rolled 1 d20 dice and got:  [10] 
-roll(die,how_many): 20 2 
-[1] 21:55:58>> Rolled 2 d20 dice and got:  [4, 7] 
-
+C:\Users\Panos\Desktop\dndsuite>python dnd roll
+roll(2d20+5): 2d20
+[0] 23:41:46>> Rolled 2d20 and got:  [17, 13]
+roll(2d20+5): 2d20-2
+[1] 23:41:50>> Rolled 2d20-2 and got:  [14, 2] [12, 0]
+roll(2d20+5): d10
+[2] 23:41:54>> Rolled d10 and got:  [5]
+roll(2d20+5): 3d8-3
+[3] 23:41:59>> Rolled 3d8-3 and got:  [5, 3, 4] [2, 0, 1]
