@@ -1,5 +1,5 @@
 import pandas
-
+import re
 
 def identify_name(line):
 	split = line.rstrip().split(' ')
@@ -9,7 +9,11 @@ def identify_name(line):
 			return False
 
 	else:
-			return ''.join(split)
+			name = ' '.join(split)
+			name = name.replace('  ','#')
+			name = name.replace(' ','')
+			name = name.replace('#',' ')
+			return name
 
 def identify_level_stype(line):
 	# split = line.rstrip().split(' ')
@@ -41,30 +45,32 @@ def identify_level_stype(line):
 def identify_casting_time(line):
 	if line.startswith('Casting Tim'):
 		orr = None
-		if '1 action' in line:
+
+		if re.search('1\s*action',line):
 			ct = line.split(': ')[1]
 			if 'or' in line:
 				ct,orr = line.split(': ')[1].split('or')
-		elif 'bon u s' in line:
+		elif re.search('1\s*bonus\s*action',line):
 			ct = '1 bonus action'
 
 		elif 'm inutes' in line or 'm inu tes' in line:
 			ct = '10 minutes'
-		elif 'm inute' in line or 'minute' in line:
+		elif re.search('minute',line):
 			ct = '1 minute'
-		elif '1 h our' in line or '1 h ou r' in line or '1 hour' in line :
+		elif '1  hour' in line:
 			ct = '1 hour'
 		elif '24' in line:
 			ct = '24 hours'
 
-		elif '8 h ours' in line:
+		elif re.search('8\s*hours',line):
 			ct = '8 hours'
 		elif '12' in line:
 			ct = '12 hours'
 		elif 'reaction' in line:
 			ct = '1 reaction'
 			orr = line.split(',')[1]
-
+		else:
+			print [line]
 		return ct,orr
 	else:
 		return None,None
@@ -78,19 +84,19 @@ def identify_range(line):
 			r = 'sight'
 		elif 'Self' in line or 'S elf' in line:
 			r = 'self'
-		elif '1 m ile' in line:
+		elif re.search('1\s*mile',line):
 			r = '1 mile'
-		elif 'Specia l' in line:
+		elif 'Special' in line:
 			r = 'special'
 		elif '500 m iles' in line:
 			r = '500 miles'
-		elif 'Unlim ited' in line:
+		elif re.search('Unlimited',line):
 			r = 'Unlimited'
 
 		elif 'feet' in line:
 			r = line.rstrip().split(': ')[1]
 		else:
-			print line
+			print "range error: ",line
 			
 
 		return r
@@ -98,7 +104,7 @@ def identify_range(line):
 		return None
 
 def identify_components(line):
-	if line.startswith('Com ponents'):
+	if line.startswith('Components'):
 		comment = None
 		comps = []
 		if 'V' in line:
@@ -107,7 +113,7 @@ def identify_components(line):
 			comps.append('S')
 		if 'M' in line:
 			comps.append('M')
-			comment = line.rstrip().split('(')[1]
+			comment = '('+line.rstrip().split('(')[1]
 			
 		return comps,comment
 	else:
@@ -117,18 +123,18 @@ def identify_duration(line):
 	if line.startswith('Duration: '):
 		comment = None
 		
-		if True in [(x in line) for x in ['1 r ound', '1 round', '1 h ou r','1 roun d']]:
+		if True in [(x in line) for x in ['1  round','1 r ound', '1 round', '1 h ou r','1 roun d']]:
 			dur = '1 round'
 		elif True in [(x in line) for x in ['In stan tan','Instantaneous']]:
 			dur = 'instant'
-		elif True in [(x in line) for x in ['1 minute','1 m inute']]:
+		elif True in [(x in line) for x in ['1  minute', '1 minute','1 m inute']]:
 			dur = '1 minutes'
-		elif True in [(x in line) for x in ['1 h our','1 hour']]:
+		elif True in [(x in line) for x in ['1 h our','1 hour','1  hour']]:
 			dur = '1 hour'
 		elif True in [(x in line) for x in ['Con centration','Concentration']]:
 			dur = 'concentration'
 			comment = line.rstrip().split(',')
-		elif True in [(x in line) for x in ['10 m inutes']]:
+		elif True in [(x in line) for x in ['10  minutes', '10 minutes']]:
 			dur = '10 minutes'
 		elif True in [(x in line) for x in ['8 hours','8 h ours','8 h ou rs']]:
 			dur = '8 hours'
@@ -140,18 +146,18 @@ def identify_duration(line):
 			dur = '30 days'
 		elif True in [(x in line) for x in ['7 days']]:
 			dur = '7 days'
-		elif True in [(x in line) for x in ['Specia l']]:
+		elif True in [(x in line) for x in ['Special']]:
 			dur = 'special'
 		elif True in [(x in line) for x in ['Until']]:
 
 			dur = 'Until dispelled or triggered'
-		elif True in [(x in line) for x in ['1 day']]:
+		elif True in [(x in line) for x in ['1  day']]:
 
 			dur = '1 day'
 			
 
 		else:
-			print line
+			print "##",line
 
 		return dur,comment
 	else:
@@ -174,12 +180,10 @@ def get_spells(f):
 
 		level,stype,ritual  = identify_level_stype(line)
 		if stype:
-
-			
+			stype = stype.lower()
 			spells[c_name]['level'] =  level
 			spells[c_name]['type'] =  stype
 			if ritual:
-				
 				spells[c_name]['ritual'] =  True
 			line = f.next()
 			
@@ -216,8 +220,8 @@ def get_spells(f):
 					comment += line.rstrip()
 					line = f.next()
 				
+				print comment
 				spells[c_name]['components_comment'] =  comment[:-1]
-				print [comment[:-1]]
 				
 			else:
 				line = f.next()
@@ -245,8 +249,8 @@ def get_spells(f):
 		else:
 			spells[c_name]['discription'] =  ''.join(discription)
 
-# with  open('./raw_spells.txt.','r') as f:
-# 	spells = get_spells(f)
+with  open('./pdfspells.txt.','r') as f:
+	spells = get_spells(f)
 
 # columns = ['name','level','type','ritual','casting_time','casting_time_comment', 'range','components','components_comment','duration','duration_comment','discription']
 
@@ -271,7 +275,7 @@ def get_spells(f):
 
 
 spells = pandas.DataFrame.from_csv('./spells.txt', sep=';')
-print spells[spells['level'] == '0']
+print spells[spells['level'] == '9']
 # 
 
 
