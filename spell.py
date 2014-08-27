@@ -2,18 +2,20 @@ import pandas
 import re
 
 def identify_name(line):
-	split = line.rstrip().split(' ')
-	
-	for x in split:
-		if len(x) > 1:	
-			return False
+	if  re.search('[a-zA-Z]\s[a-zA-Z]\s',line.rstrip()):
+					split = line.rstrip().split(' ')
+					for x in split:
+						if len(x)>1:
+							return False
+					else:
+						name = ' '.join(split)
+						name = name.replace('  ','#')
+						name = name.replace(' ','')
+						name = name.replace('#',' ')
 
-	else:
-			name = ' '.join(split)
-			name = name.replace('  ','#')
-			name = name.replace(' ','')
-			name = name.replace('#',' ')
-			return name
+
+						return name
+			
 
 def identify_level_stype(line):
 	# split = line.rstrip().split(' ')
@@ -53,7 +55,7 @@ def identify_casting_time(line):
 		elif re.search('1\s*bonus\s*action',line):
 			ct = '1 bonus action'
 
-		elif 'm inutes' in line or 'm inu tes' in line:
+		elif re.search('10\s*minutes',line):
 			ct = '10 minutes'
 		elif re.search('minute',line):
 			ct = '1 minute'
@@ -66,7 +68,8 @@ def identify_casting_time(line):
 			ct = '8 hours'
 		elif '12' in line:
 			ct = '12 hours'
-		elif 'reaction' in line:
+		elif re.search('1\s*reaction',line):
+			print line
 			ct = '1 reaction'
 			orr = line.split(',')[1]
 		else:
@@ -88,7 +91,7 @@ def identify_range(line):
 			r = '1 mile'
 		elif 'Special' in line:
 			r = 'special'
-		elif '500 m iles' in line:
+		elif '500 miles' in line:
 			r = '500 miles'
 		elif re.search('Unlimited',line):
 			r = 'Unlimited'
@@ -120,7 +123,9 @@ def identify_components(line):
 		return False,False
 
 def identify_duration(line):
+	
 	if line.startswith('Duration: '):
+		
 		comment = None
 		
 		if True in [(x in line) for x in ['1  round','1 r ound', '1 round', '1 h ou r','1 roun d']]:
@@ -131,9 +136,11 @@ def identify_duration(line):
 			dur = '1 minutes'
 		elif True in [(x in line) for x in ['1 h our','1 hour','1  hour']]:
 			dur = '1 hour'
-		elif True in [(x in line) for x in ['Con centration','Concentration']]:
+		elif re.search('Concentration,',line):
 			dur = 'concentration'
-			comment = line.rstrip().split(',')
+			comment = line.rstrip().split(',')[1]
+			print comment
+
 		elif True in [(x in line) for x in ['10  minutes', '10 minutes']]:
 			dur = '10 minutes'
 		elif True in [(x in line) for x in ['8 hours','8 h ours','8 h ou rs']]:
@@ -198,7 +205,7 @@ def get_spells(f):
 					orr += line
 					line = f.next()
 				
-				spells[c_name]['casting_time_comment'] =  'ct comment'
+				spells[c_name]['casting_time_comment'] =  orr
 			else:
 				line = f.next()
 			
@@ -216,11 +223,10 @@ def get_spells(f):
 			if comment:
 				line = f.next()
 				
-				while not line.startswith('D'):
+				while not line.startswith('Duration'):
 					comment += line.rstrip()
 					line = f.next()
 				
-				print comment
 				spells[c_name]['components_comment'] =  comment[:-1]
 				
 			else:
@@ -243,39 +249,44 @@ def get_spells(f):
 			try:
 				line = f.next()
 			except:
+				spells[c_name]['discription'] =  ''.join(discription)
 				return spells
 				pass
 
 		else:
 			spells[c_name]['discription'] =  ''.join(discription)
 
-with  open('./pdfspells.txt.','r') as f:
+
+with  open('./npdfspells.txt.','r') as f:
 	spells = get_spells(f)
 
-# columns = ['name','level','type','ritual','casting_time','casting_time_comment', 'range','components','components_comment','duration','duration_comment','discription']
+columns = ['name','level','type','ritual','casting_time','casting_time_comment', 'range','components','components_comment','duration','duration_comment','discription']
 
 
 
 
 
 
-# with open('./spells.txt','w') as f:
-# 	f.write(';'.join(columns)+'\n')
+with open('./spells.txt','w') as f:
+	f.write(';'.join(columns)+'\n')
 
-# 	for k,v in spells.items():
-# 		tp = [k]
-# 		for x in columns[1:]:
-# 			tp.append(str(v.get(x,'-')))
+	for k in sorted(spells.keys()):
+		v = spells[k]
+		tp = [k]
+		for x in columns[1:]:
+			tp.append(str(v.get(x,'-')))
 		
-# 		f.write(';'.join(tp).replace('\n','')+'\n' )
+		f.write(';'.join(tp).replace('\n','')+'\n' )
 
 
 
 
 
 
-spells = pandas.DataFrame.from_csv('./spells.txt', sep=';')
-print spells[spells['level'] == '9']
+
+
+# spells = pandas.DataFrame.from_csv('./spells.txt', sep=';')
+# print spells[spells['level'] == '9']
 # 
 
 
